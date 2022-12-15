@@ -1,0 +1,46 @@
+# Namespace where the Scylla Cluster will be created
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: scylla
+
+---
+
+# Simple Scylla Cluster
+apiVersion: scylla.scylladb.com/v1
+kind: ScyllaCluster
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: cart-cluster
+  namespace: scylla
+spec:
+  version: 5.0.5
+  agentVersion: 3.0.1
+  developerMode: true
+  alternator: 
+    port: 8000
+    writeIsolation: only_rmw_uses_lwt
+  datacenter:
+    name: us-east-1
+    racks:
+      - name: us-east-1a
+        scyllaConfig: "scylla-config"
+        scyllaAgentConfig: "scylla-agent-config"
+        members: 3
+        storage:
+          capacity: 5Gi
+        resources:
+          requests:
+            cpu: 1
+            memory: 1Gi
+          limits:
+            cpu: 1
+            memory: 1Gi
+        # volumes:
+        #   - name: coredumpfs
+        #     hostPath:
+        #       path: /tmp/coredumps
+        # volumeMounts:
+        #   - mountPath: /tmp/coredumps
+        #     name: coredumpfs

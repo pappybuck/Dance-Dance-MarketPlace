@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sqlpad
+  namespace: cockroachdb
+spec:
+  selector:
+    matchLabels:
+      app: sqlpad
+  template:
+    metadata:
+      labels:
+        app: sqlpad
+    spec:
+      containers:
+      - name: pegasus
+        image: sqlpad/sqlpad
+        imagePullPolicy: Always
+        env:
+            - name: TZ
+              value: "America/New_York"
+            - name: SQLPAD_AUTH_DISABLED
+              value: "true"
+            - name: SQLPAD_AUTH_DISABLED_DEFAULT_ROLE
+              value: "admin"
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 3000

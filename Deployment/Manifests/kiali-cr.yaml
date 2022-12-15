@@ -1,0 +1,25 @@
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  name: kiali
+  namespace: istio-system
+spec:
+  external_services:
+    prometheus:
+      url: "http://prometheus-server.monitoring"
+    # grafana:
+    #   enabled: true
+    #   # Grafana service name is "grafana" and is in the "telemetry" namespace.
+    #   in_cluster_url: 'http://grafana.grafana'
+    #   url: 'http://localhost:3000'
+    # tracing:
+    #   # Enabled by default. Kiali will anyway fallback to disabled if
+    #   # Jaeger is unreachable.
+    #   enabled: true
+    #   # Jaeger service name is "tracing" and is in the "telemetry" namespace.
+    #   # Make sure the URL you provide corresponds to the non-GRPC enabled endpoint
+    #   # if you set "use_grpc" to false.
+    #   in_cluster_url: 'http://jaeger-jaeger-query.jaeger:16685/jaeger'
+    #   use_grpc: true
+    #   # Public facing URL of Jaeger
+    #   url: 'http://localhost:8080/jaeger'

@@ -1,0 +1,282 @@
+---
+- name: Install Cluster
+  hosts: all
+  become: yes
+  remote_user: root
+  tasks:
+  - name: Install Kubectl
+    shell: |
+      curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+  - name: Install Helm
+    shell: |
+      curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+      sudo apt-get install apt-transport-https --yes
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+      sudo apt-get update
+      sudo apt-get install helm
+  - name: Create kubeconfig file
+    shell: |
+      mkdir -p /etc/.kube
+      touch /etc/.kube/config
+    environment:
+      KUBECONFIG: /etc/.kube/config
+  - name: Copy kubeconfig to /etc/.kube/config
+    ansible.builtin.copy:
+      src: ./config
+      dest: /etc/.kube/config
+      owner: root
+      group: root
+      mode: 0644
+  - name: Copy kubeconfig to /root/.kube/config
+    shell: |
+      mkdir -p /root/.kube
+      cp /etc/.kube/config /root/.kube/config
+  - name: Copy Helm Configs
+    ansible.builtin.copy:
+      src: ../Helm Configs/
+      dest: /etc/.helm
+      owner: root
+      group: root
+      mode: 0644
+  - name: Copy Prometheus-Crd
+    ansible.builtin.copy:
+      src: ../prometheus-crd
+      dest: /etc/.helm
+      owner: root
+      group: root
+      mode: 0644
+  - name: Install Pip
+    apt:
+      name: python3-pip
+      state: present
+  - name: Install pre-requisites
+    pip:
+      name:
+        - openshift
+        - pyyaml
+        - kubernetes 
+  - name: Add Istio Repo
+    kubernetes.core.helm_repository:
+      name: istio
+      repo_url: https://istio-release.storage.googleapis.com/charts
+      state: present
+  - name: Install Istio Base
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      release_name: istio-base
+      chart_ref: istio/base
+      release_namespace: istio-system
+      create_namespace: yes
+      state: present
+  - name: Install Istio Discovery
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      release_name: istiod
+      chart_ref: istio/istiod
+      release_namespace: istio-system
+      create_namespace: yes
+      state: present
+  - name: Add Prometheus Repo
+    kubernetes.core.helm_repository:
+      name: prometheus-community
+      repo_url: https://prometheus-community.github.io/helm-charts
+      state: present
+  - name: Create Monitoring Namespace
+    kubernetes.core.k8s:
+      kubeconfig: /etc/.kube/config
+      definition:
+        apiVersion: v1
+        kind: Namespace 
+        metadata:
+          name: monitoring
+          labels:
+            istio-injection: enabled
+  - name: Install Prometheus
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      chart_ref: prometheus-community/prometheus
+      release_name: prometheus
+      release_namespace: monitoring
+      values_files:
+        - /etc/.helm/prometheus.yaml
+  - name: Install Prometheus-Crd
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      chart_ref: /etc/.helm/prometheus-crd
+      release_name: prometheus-crd
+      release_namespace: default
+      state: present
+  - name: Add Cert Manager Repo
+    kubernetes.core.helm_repository:
+      name: jetstack
+      repo_url: https://charts.jetstack.io
+      state: present
+  - name: Install Cert Manager
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      chart_ref: jetstack/cert-manager
+      release_name: cert-manager
+      release_namespace: cert-manager
+      create_namespace: yes
+      values_files:
+        - /etc/.helm/cert-manager.yaml
+  - name: Add Grafan Repo
+    kubernetes.core.helm_repository:
+      name: grafana
+      repo_url: https://grafana.github.io/helm-charts
+      state: present
+  - name: Install Grafana
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      chart_ref: grafana/grafana
+      release_name: grafana
+      release_namespace: monitoring
+      values_files:
+        - /etc/.helm/grafana.yaml
+  - name: Add Bitnami Repo
+    kubernetes.core.helm_repository:
+      name: bitnami
+      repo_url: https://charts.bitnami.com/bitnami
+      state: present
+  - name: Create Nginx Namespace
+    kubernetes.core.k8s:
+      kubeconfig: /etc/.kube/config
+      definition:
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: nginx
+          labels:
+            istio-injection: enabled
+  - name: Install Nginx Ingress
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      chart_ref: bitnami/nginx-ingress-controller
+      release_name: nginx
+      release_namespace: nginx
+  - name: Add Kong Repo
+    kubernetes.core.helm_repository:
+      name: kong
+      repo_url: https://charts.konghq.com
+      state: present
+  - name: Create Kong Namespace
+    kubernetes.core.k8s:
+      kubeconfig: /etc/.kube/config
+      definition:
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: kong
+          labels:
+            istio-injection: enabled
+  - name: Install Kong
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      chart_ref: kong/kong
+      release_name: kong
+      release_namespace: kong
+      create_namespace: yes
+      values_files:
+        - /etc/.helm/kong.yaml
+  - name: Add Cockroachdb Repo
+    kubernetes.core.helm_repository:
+      name: cockroachdb
+      repo_url: https://charts.cockroachdb.com/
+      state: present
+  - name: Install Cockroachdb
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      chart_ref: cockroachdb/cockroachdb
+      release_name: cockroachdb
+      release_namespace: cockroachdb
+      create_namespace: yes
+      values_files:
+        - /etc/.helm/cockroachdb.yaml
+  - name: Install Metrics Server
+    shell: |
+      kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+  - name: Create Redis Namespace
+    kubernetes.core.k8s:
+      kubeconfig: /etc/.kube/config
+      definition:
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: redis
+          # labels:
+          #   istio-injection: enabled
+  - name: Install Redis
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      chart_ref: bitnami/redis-cluster
+      release_name: redis
+      release_namespace: redis
+      create_namespace: yes
+      values_files:
+        - /etc/.helm/redis-cluster.yaml
+  - name: Install Redis Insight
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      chart_ref: /etc/.helm/redisinsight-chart.tgz
+      release_name: redisinsight
+      release_namespace: redis
+      state: present
+  - name: Add Kiali Repo
+    kubernetes.core.helm_repository:
+      name: kiali
+      repo_url: https://kiali.org/helm-charts
+      state: present
+  - name: Install Kiali
+    kubernetes.core.helm:
+      kubeconfig: /etc/.kube/config
+      chart_ref: kiali/kiali-operator
+      release_name: kiali
+      release_namespace: kiali-operator
+      create_namespace: yes
+  - name: Wait for Nginx load balancer to be ready
+    kubernetes.core.k8s_info:
+      kubeconfig: /etc/.kube/config
+      kind: Service
+      name: nginx-nginx-ingress-controller
+      namespace: nginx
+    register: nginx_service
+    until: nginx_service.resources[0].status.loadBalancer.ingress[0].ip is defined
+    retries: 30
+    delay: 10
+  - name: Save Nginx load balancer ip to file
+    ansible.builtin.copy:
+      content: "{{ nginx_service.resources[0].status.loadBalancer.ingress[0].ip }}"
+      dest: /etc/.kube/nginx_ip
+  - name: Fetch Nginx load balancer ip
+    fetch:
+      src: /etc/.kube/nginx_ip
+      dest: /tmp/nginx_ip
+      flat: yes
+  - name: Delete Nginx load balancer ip file
+    file:
+      path: /etc/.kube/nginx_ip
+      state: absent
+  - name: Wait for kong load balancer to be ready
+    kubernetes.core.k8s_info:
+      kubeconfig: /etc/.kube/config
+      kind: Service
+      name: kong-kong-proxy
+      namespace: kong
+    register: kong_service
+    until: kong_service.resources[0].status.loadBalancer.ingress[0].ip is defined
+    retries: 30
+    delay: 10
+  - name: Save kong load balancer ip to file
+    ansible.builtin.copy:
+      content: "{{ kong_service.resources[0].status.loadBalancer.ingress[0].ip }}"
+      dest: /etc/.kube/kong_ip
+  - name: Fetch kong load balancer ip
+    fetch:
+      src: /etc/.kube/kong_ip
+      dest: /tmp/kong_ip
+      flat: yes
+  - name: Delete kong load balancer ip file
+    file:
+      path: /etc/.kube/kong_ip
+      state: absent

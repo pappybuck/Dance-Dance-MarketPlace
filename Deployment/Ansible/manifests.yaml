@@ -1,0 +1,76 @@
+- name: Install Manifests
+  hosts: all
+  become: yes
+  remote_user: root
+  tasks:
+    - name: Copy Manifest Files
+      ansible.builtin.copy:
+        src: ../Manifests/
+        dest: /etc/.marketplace/
+        owner: root
+        group: root
+        mode: 0644
+    - name: Create Cockroachdb Client Secure
+      shell: |
+        kubectl apply -f /etc/.marketplace/client-secure.yaml -n cockroachdb
+    - name: Wait for Client Secure 
+      kubernetes.core.k8s_info:
+        kubeconfig: /etc/.kube/config
+        api_version: v1
+        kind: Pod
+        namespace: cockroachdb
+        name: cockroachdb-client-secure
+      register: client_secure
+      until: client_secure.resources[0].status.phase == "Running"
+      retries: 10
+      delay: 10
+    - name: Populate Database
+      expect:
+        command: kubectl exec -it cockroachdb-client-secure -n cockroachdb -- ./cockroach sql --certs-dir=./cockroach-certs --host=cockroachdb-public
+        responses:
+          "Welcome" : "CREATE DATABASE marketplace; CREATE USER Patrick WITH PASSWORD 'password';GRANT admin TO Patrick;"
+          "GRANT" : "\\q"
+          "root@cockroachdb-client" : "exit"
+    - name: Delete Client Secure
+      shell: |
+        kubectl delete -f /etc/.marketplace/client-secure.yaml -n cockroachdb
+    - name: Copy Container Registry Secret to Cockroachdb Namespace
+      shell: |
+        kubectl get secret dancedanceregistry -n default -o yaml | sed 's/namespace: default/namespace: cockroachdb/' | kubectl apply -f -
+    - name: Create Database job
+      shell: |
+        kubectl apply -f /etc/.marketplace/dbsetup.yaml
+    - name: Install Graphql
+      shell: |
+        kubectl apply -f /etc/.marketplace/Graphql.yaml
+    - name: Copy Container Registry Secret to Graphql Namespace
+      shell: |
+        kubectl get secret dancedanceregistry -n default -o yaml | sed 's/namespace: default/namespace: graphql/' | kubectl apply -f -
+    - name: Install Janus
+      shell: |
+        kubectl apply -f /etc/.marketplace/Janus.yaml
+    - name: Copy Container Registry Secret to Auth Namespace
+      shell: |
+        kubectl get secret dancedanceregistry -n default -o yaml | sed 's/namespace: default/namespace: auth/' | kubectl apply -f -
+    - name: Install Pegasus
+      shell: |
+        kubectl apply -f /etc/.marketplace/Pegasus.yaml
+    - name: Install Frontend
+      shell: |
+        kubectl apply -f /etc/.marketplace/Nextjs.yaml
+    - name: Copy Container Registry Secret to Frontend Namespace
+      shell: |
+        kubectl get secret dancedanceregistry -n default -o yaml | sed 's/namespace: default/namespace: frontend/' | kubectl apply -f -
+    - name: Install ClusterIssuers
+      shell: |
+        kubectl apply -f /etc/.marketplace/cert.yaml
+    - name: Add Api Ingress route
+      shell: |
+        kubectl apply -f /etc/.marketplace/kong-ingress.yaml
+    - name: Add Frontend Ingress route
+      shell: |
+        kubectl apply -f /etc/.marketplace/nginx-ingress.yaml
+    - name: Configure Kiali
+      shell: |
+        kubectl apply -f /etc/.marketplace/kiali-cr.yaml
+          

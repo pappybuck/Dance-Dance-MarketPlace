@@ -1,0 +1,32 @@
+# apiVersion: v1
+# data:
+#   .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5wYXRyaWNrYnVjay5uZXQiOnsidXNlcm5hbWUiOiJhZG1pbiIsInBhc3N3b3JkIjoiSGFyYm9yMTIzNDUiLCJlbWFpbCI6InBhcHB5YnVja0Bob3RtYWlsLmNvbSIsImF1dGgiOiJZV1J0YVc0NlNHRnlZbTl5TVRJek5EVT0ifX19
+# kind: Secret
+# metadata:
+#   name: harborcred
+#   namespace: cockroachdb
+# type: kubernetes.io/dockerconfigjson
+
+---
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup
+  namespace: cockroachdb
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      containers:
+      - name: database-setup
+        # image: registry.patrickbuck.net/marketplace/database-setup:latest
+        image: registry.digitalocean.com/dancedanceregistry/database-setup:latest
+        env:
+          - name: DATABASE_URL
+            value: "postgresql://Patrick:password@cockroachdb-public.cockroachdb.svc.cluster.local:26257/?sslmode=require&options=--cluster%3Dcockroachdb-cluster"
+      restartPolicy: Never
+      imagePullSecrets:
+        # - name: harborcred
+        - name: dancedanceregistry
+  backoffLimit: 4

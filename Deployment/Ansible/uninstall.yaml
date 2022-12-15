@@ -1,0 +1,60 @@
+---
+- name: Uninstall Cluster
+  hosts: all
+  become: yes
+  remote_user: root
+  tasks:
+    - name: Uninstall Nginx
+      kubernetes.core.helm:
+        kubeconfig: /etc/.kube/config
+        namespace: nginx
+        name: nginx
+        state: absent
+        wait: true
+    - name: Uninstall Kong 
+      kubernetes.core.helm:
+        kubeconfig: /etc/.kube/config
+        namespace: kong
+        name: kong
+        state: absent
+        wait: true
+    - name: Uninstall Redis 
+      kubernetes.core.helm:
+        kubeconfig: /etc/.kube/config
+        namespace: redis
+        name: redis
+        state: absent
+        wait: true
+    - name: Uninstall Cockroachdb
+      kubernetes.core.helm:
+        kubeconfig: /etc/.kube/config
+        namespace: cockroachdb
+        name: cockroachdb
+        state: absent
+        wait: true
+    - name: Uninstall Prometheus
+      kubernetes.core.helm:
+        kubeconfig: /etc/.kube/config
+        namespace: monitoring
+        name: prometheus
+        state: absent
+        wait: true
+    - name: Uninstall Grafana
+      kubernetes.core.helm:
+        kubeconfig: /etc/.kube/config
+        namespace: monitoring
+        name: grafana
+        state: absent
+        wait: true
+    - name: Remove all pvc monitoring
+      shell: kubectl delete pvc --all -n monitoring
+      ignore_errors: yes
+    - name: Remove all cockroachdb pods
+      shell: kubectl delete pods --all -n cockroachdb
+      ignore_errors: yes
+    - name: Remove all pvc cockroachdb
+      shell: kubectl delete pvc --all -n cockroachdb
+      ignore_errors: yes
+    - name: Remove all pvc redis
+      shell: kubectl delete pvc --all -n redis
+      ignore_errors: yes

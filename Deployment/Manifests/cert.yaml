@@ -1,0 +1,33 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: kong-issuer
+  namespace: cert-manager
+spec:
+  acme:
+    email: pappybuck@hotmail.com
+    privateKeySecretRef:
+      name: kong-issuer
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+    - http01:
+        ingress:
+          class: kong
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: nginx-issuer
+  namespace: cert-manager
+spec:
+  acme:
+    email: pappybuck@hotmail.com
+    privateKeySecretRef:
+      name: nginx-issuer
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+    - http01:
+        ingress:
+          class: nginx

@@ -1,0 +1,13 @@
+Concurrent: 1000
+Servers:
+  - redis:
+    route: "redis.localhost:4000"
+    host: "localhost:8001"
+    # authentication: "http://localhost:3001/auth/verify"
+  - auth:
+    route: "auth.localhost"
+    host: "auth"
+  - pegasus:
+    route: "localhost:4000"
+    host: "localhost:3003"
+    authentication: "http://localhost:3001/auth/verify"

@@ -1,0 +1,9 @@
+query FetchProducts{
+    Products{
+        id
+        name
+        description
+        price
+        quantity
+    }
+}

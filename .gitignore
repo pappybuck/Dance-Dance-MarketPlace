@@ -1,0 +1,9 @@
+db/
+.terraform/
+*.tfstate
+*.tfvars
+*.hcl
+*.backup
+target
+id_rsa
+id_rsa.pub

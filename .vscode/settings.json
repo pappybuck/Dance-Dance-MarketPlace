@@ -1,0 +1,24 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "Postgres",
+            "database": "marketplace",
+            "username": "dance-dance",
+            "password": "password"
+        },
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3000,
+            "driver": "PostgreSQL",
+            "name": "Dance Dance",
+            "database": "dance-dance-db",
+            "username": "dance-dance",
+            "password": "password"
+        }
+    ]
+}

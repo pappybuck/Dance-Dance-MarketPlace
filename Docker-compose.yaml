@@ -1,0 +1,101 @@
+version: '3.9'
+services:
+  # traefik:
+  #   image: "traefik:v2.8"
+  #   container_name: "traefik"
+  #   command:
+  #     # - "--log.level=DEBUG"
+  #     - "--api.insecure=true"
+  #     - "--providers.docker=true"
+  #     - "--providers.docker.exposedbydefault=false"
+  #     - "--entrypoints.web.address=:80"
+  #   ports:
+  #     - "80:80"
+  #     - "8080:8080"
+  #   volumes:
+  #     - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  #   depends_on:
+  #     # - graphql
+  #     - nextjs
+  # nextjs:
+  #   build: ./Nextjs/dance-dance-marketplace/
+  #   depends_on:
+  #     - graphql
+  #   environment:
+  #     REVALIDATE_SECRET: "secret"
+  #     TZ: "America/New_York"
+  #   # deploy:
+  #   #   mode: replicated
+  #   #   replicas: 2
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.nextjs.rule=Host(`patrickbuck.local`)"
+  #     - "traefik.http.routers.nextjs.entrypoints=web"
+  #     #- "traefik.http.routers.nextjs.service=nextjs"
+  #     - "traefik.http.services.nextjs.loadbalancer.server.port=3000"
+  #     - "traefik.http.routers.nextjs.middlewares=nextjs-compress"
+  #     - "traefik.http.middlewares.nextjs-compress.compress=true"
+  # graphql:
+  #   build: ./graphql/Golang/
+  #   depends_on:
+  #     - db
+  #     - redis
+  #   environment:
+  #     PORT: 4000
+  #     TZ: "America/New_York"
+  #     REDIS_HOST: "redis:6379"
+  #     REDIS_PASSWORD: ""
+    # ports:
+    #   - "4000:4000"
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.graphql.rule=Host(`graphql.localhost`) && PathPrefix(`/graphql`)"
+  #     - "traefik.http.routers.graphql.entrypoints=web"
+  #     - "traefik.http.services.graphql.loadbalancer.server.port=4000"
+  auth:
+    build: ./auth/Janus/
+    ports:
+      - "3001:80"
+      - "3002:443"
+    environment:
+      TZ: "America/New_York"
+      SqlConnection: "Host=db;Port=5432;Database=dance-dance-db;Username=dance-dance;Password=password"
+      JWT_URL: "http://pegasus:8080"
+    depends_on:
+      - db
+  pegasus:
+    build: ./auth/Pegasus/
+    ports:
+      - "3003:8080"
+    environment:
+      TZ: "America/New_York"
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: dance-dance
+      POSTGRES_DB: dance-dance-db
+      TZ: "America/New_York"
+    ports:
+      - "3030:5432"
+    volumes:
+      - ./db:/var/lib/postgresql/data
+      - ./migrations/migrationsV2.sql:/docker-entrypoint-initdb.d/init.sql
+  redis:
+    image: redis/redis-stack
+    ports:
+
+      - "8001:8001"
+  # proxy:
+  #   build: ./Proxy/Golang/
+  #   ports:
+  #     - "80:4000"
+  #   environment:
+  #     TZ: "America/New_York"
+      # RUST_LOG: "tower_http=trace"
+      # RUST_LOG: "info"
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.redis.rule=Host(`redis.localhost`)"
+  #     - "traefik.http.routers.redis.entrypoints=web"
+  #     - "traefik.http.services.redis.loadbalancer.server.port=8001"

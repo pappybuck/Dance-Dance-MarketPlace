@@ -1,0 +1,42 @@
+type Mutation {
+  AddProduct(description: String!, name: String!, price: Float!, quantity: Int!): Product!
+  RemoveProduct(id: ID!): Product!
+  UpdateProduct(id: ID!, description: String, name: String, price: Float, quantity: Int): Product!
+  CreateReview(description: String!, name: String!, productId: ID!, rating: Int!, userId: ID!): Review!
+  DeleteReview(id: ID!): Review!
+  UpdateReview(id: ID!, description: String, name: String, productId: ID, rating: Int, userId: ID): Review!
+}
+
+type Product {
+  description: String
+  id: ID
+  name: String
+  price: Float
+  quantity: Int
+  reviews: [Review]
+}
+
+type Query {
+  Product(id: ID!): Product
+  Products: [Product]
+  User(id: ID!): User
+  Users: [User]
+}
+
+type Review {
+  description: String
+  id: ID
+  name: String
+  product: Product
+  rating: Int
+  user: User
+}
+
+type User {
+  id: ID
+  firstName: String
+  lastName: String
+  email: String
+  phone: String
+  reviews: [Review]
+}

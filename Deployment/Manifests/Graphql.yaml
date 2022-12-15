@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: graphql
+  labels:
+    istio-injection: enabled
+# ---
+
+# apiVersion: v1
+# data:
+#   .dockerconfigjson: eyJhdXRocyI6eyJyZWdpc3RyeS5wYXRyaWNrYnVjay5uZXQiOnsidXNlcm5hbWUiOiJhZG1pbiIsInBhc3N3b3JkIjoiSGFyYm9yMTIzNDUiLCJlbWFpbCI6InBhcHB5YnVja0Bob3RtYWlsLmNvbSIsImF1dGgiOiJZV1J0YVc0NlNHRnlZbTl5TVRJek5EVT0ifX19
+# kind: Secret
+# metadata:
+#   name: harborcred
+#   namespace: graphql
+# type: kubernetes.io/dockerconfigjson
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphql
+  namespace: graphql
+spec:
+  selector:
+    matchLabels:
+      app: graphql
+  template:
+    metadata:
+      labels:
+        app: graphql
+    spec:
+      containers:
+      - name: graphql
+        image: registry.digitalocean.com/dancedanceregistry/graphql:latest
+        # image: registry.patrickbuck.net/marketplace/graphql:latest
+        # image:  dev-registry:5000/graphql
+        # image: localhost:32000/graphql
+        # image: pappybuck/graphql-local
+        imagePullPolicy: Always
+        env:
+          - name: PORT
+            value: "4000"
+          - name: DB_USER
+            value: "Patrick"
+          - name: DB_PASSWORD
+            value: "password"
+          - name: DB_HOST
+            value: "cockroachdb-public.cockroachdb.svc.cluster.local"
+          - name: DB_PORT
+            value: "26257"
+          - name: DB_NAME
+            value: "marketplace"
+          - name: DB_OPTIONS
+            value: "cluster%3Dcockroachdb-cluster"
+          - name: REDIS_HOST
+            value: "redis-redis-cluster.redis.svc.cluster.local:6379"
+          - name: REDIS_PASSWORD
+            value: "password"
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 4000
+      imagePullSecrets:
+        # - name: harborcred
+        - name: dancedanceregistry
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphql-service
+  namespace: graphql
+spec:
+  selector:
+    app: graphql
+  ports:
+  - port: 80
+    targetPort: 4000
+  type: ClusterIP
+
+---
+
