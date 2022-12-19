@@ -70,7 +70,7 @@ resource "digitalocean_droplet" "ansible" {
   image = "ubuntu-20-04-x64"
   name = "ansible"
   size = "s-1vcpu-1gb"
-  ssh_keys = [ "36973811" ]
+  ssh_keys = [ "36973811", "37085590" ]
 }
 
 resource "local_file" "ip" {

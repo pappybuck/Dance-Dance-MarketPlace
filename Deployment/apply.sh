@@ -21,7 +21,7 @@ do
     sleep 20
 done
 cd ..
-# # Set dns
+# # # Set dns
 cd "DigitalOcean/TerraformDNS"
 nginx_ip=$(</tmp/nginx_ip)
 kong_ip=$(</tmp/kong_ip)

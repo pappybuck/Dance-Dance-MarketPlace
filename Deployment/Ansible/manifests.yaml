@@ -42,34 +42,34 @@
         kubectl apply -f /etc/.marketplace/dbsetup.yaml
     - name: Install Graphql
       shell: |
-        kubectl apply -f /etc/.marketplace/Graphql.yaml
+        kubectl apply -f /etc/.marketplace/Graphql/Graphql.yaml
     - name: Copy Container Registry Secret to Graphql Namespace
       shell: |
         kubectl get secret dancedanceregistry -n default -o yaml | sed 's/namespace: default/namespace: graphql/' | kubectl apply -f -
     - name: Install Janus
       shell: |
-        kubectl apply -f /etc/.marketplace/Janus.yaml
+        kubectl apply -f /etc/.marketplace/Auth/Janus.yaml
     - name: Copy Container Registry Secret to Auth Namespace
       shell: |
         kubectl get secret dancedanceregistry -n default -o yaml | sed 's/namespace: default/namespace: auth/' | kubectl apply -f -
     - name: Install Pegasus
       shell: |
-        kubectl apply -f /etc/.marketplace/Pegasus.yaml
+        kubectl apply -f /etc/.marketplace/Auth/Pegasus.yaml
     - name: Install Frontend
       shell: |
-        kubectl apply -f /etc/.marketplace/Nextjs.yaml
+        kubectl apply -f /etc/.marketplace/Frontend/Nextjs.yaml
     - name: Copy Container Registry Secret to Frontend Namespace
       shell: |
         kubectl get secret dancedanceregistry -n default -o yaml | sed 's/namespace: default/namespace: frontend/' | kubectl apply -f -
     - name: Install ClusterIssuers
       shell: |
         kubectl apply -f /etc/.marketplace/cert.yaml
-    - name: Add Api Ingress route
-      shell: |
-        kubectl apply -f /etc/.marketplace/kong-ingress.yaml
-    - name: Add Frontend Ingress route
-      shell: |
-        kubectl apply -f /etc/.marketplace/nginx-ingress.yaml
+    # - name: Add Api Ingress route
+    #   shell: |
+    #     kubectl apply -f /etc/.marketplace/kong-ingress.yaml
+    # - name: Add Frontend Ingress route
+    #   shell: |
+    #     kubectl apply -f /etc/.marketplace/nginx-ingress.yaml
     - name: Configure Kiali
       shell: |
         kubectl apply -f /etc/.marketplace/kiali-cr.yaml

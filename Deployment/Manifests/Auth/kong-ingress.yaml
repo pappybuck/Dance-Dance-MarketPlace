@@ -1,19 +1,6 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: graphql-kong
-  namespace: kong
-spec:
-  type: ExternalName
-  externalName: graphql-service.graphql.svc.cluster.local
-  ports:
-    - port: 80
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
   name: janus-kong
   namespace: kong
 spec:
@@ -28,7 +15,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: kong-ingress
+  name: auth-ingress
   namespace: kong
   annotations:
     cert-manager.io/cluster-issuer: kong-issuer
@@ -40,14 +27,6 @@ spec:
     - api.patrickbuck.net
   rules:
   - http:
-      paths:
-      - path: /graphql
-        pathType: Prefix
-        backend:
-          service:
-            name: graphql-kong
-            port:
-              number: 80
       - path: /auth
         pathType: Prefix
         backend:
