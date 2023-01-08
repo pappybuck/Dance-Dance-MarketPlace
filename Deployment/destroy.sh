@@ -16,6 +16,7 @@ cd ..
 # Call Terraform to destroy the environment
 cd "DigitalOcean/Terraform"
 terraform destroy -var-file="vars.tfvars" -auto-approve
+rm -f plan.out
 # Delete ssh key
 # rm ~/.ssh/id_rsa
 # rm ~/.ssh/id_rsa.pub

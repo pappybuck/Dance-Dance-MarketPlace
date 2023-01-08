@@ -114,7 +114,8 @@ spec:
     hosts:
     - api.patrickbuck.net
   rules:
-  - http:
+  - host: "api.patrickbuck.net"
+    http:
       paths:
       - path: /graphql
         pathType: Prefix

@@ -28,13 +28,13 @@ resource "digitalocean_kubernetes_cluster" "cluster" {
   region = "nyc3"
   name = "marketplace"
   auto_upgrade = true
-  version = "1.25.4-do.0"
+  version = "1.24.8-do.0"
     node_pool {
         name = "nodepool1"
-        size = "s-2vcpu-4gb"
+        size = "s-4vcpu-8gb"
         auto_scale = true
-        min_nodes = 5
-        max_nodes = 8
+        min_nodes = 3
+        max_nodes = 7
     }
 }
 

@@ -24,13 +24,24 @@ provider "digitalocean" {
     token = var.digital_ocean_api_key
 }
 
-resource "digitalocean_domain" "domain" {
+# resource "digitalocean_domain" "domain" {
+#   name = "patrickbuck.net"
+#   ip_address = var.nginx_ip
+# }
+
+data "digitalocean_domain" "domain" {
   name = "patrickbuck.net"
-  ip_address = var.nginx_ip
+}
+
+resource "digitalocean_record" "frontend" {
+  domain = data.digitalocean_domain.domain.id
+  type = "A"
+  name = "@"
+  value = var.nginx_ip
 }
 
 resource "digitalocean_record" "api" {
-    domain = digitalocean_domain.domain.id
+    domain = data.digitalocean_domain.domain.id
     type = "A"
     name = "api"
     value = var.kong_ip

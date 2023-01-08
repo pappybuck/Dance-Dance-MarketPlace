@@ -64,6 +64,9 @@
     - name: Install ClusterIssuers
       shell: |
         kubectl apply -f /etc/.marketplace/cert.yaml
+    - name: Install Auth Ingress route
+      shell: |
+        kubectl apply -f /etc/.marketplace/Auth/auth-ingress.yaml
     # - name: Add Api Ingress route
     #   shell: |
     #     kubectl apply -f /etc/.marketplace/kong-ingress.yaml

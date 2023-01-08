@@ -1,46 +1,79 @@
-# Namespace where the Scylla Cluster will be created
 apiVersion: v1
 kind: Namespace
 metadata:
   name: scylla
 
 ---
-
-# Simple Scylla Cluster
 apiVersion: scylla.scylladb.com/v1
 kind: ScyllaCluster
 metadata:
-  labels:
-    controller-tools.k8s.io: "1.0"
-  name: cart-cluster
+  name: cluster
   namespace: scylla
 spec:
-  version: 5.0.5
-  agentVersion: 3.0.1
+  version:  5.1.1
+  # version: 5.1.0
+  agentVersion: 3.0.2
   developerMode: true
-  alternator: 
-    port: 8000
-    writeIsolation: only_rmw_uses_lwt
+  # alternator: 
+  #   port: 8000
+  #   writeIsolation: always
   datacenter:
     name: us-east-1
     racks:
       - name: us-east-1a
-        scyllaConfig: "scylla-config"
-        scyllaAgentConfig: "scylla-agent-config"
         members: 3
         storage:
-          capacity: 5Gi
+          capacity: 10Gi
         resources:
-          requests:
-            cpu: 1
-            memory: 1Gi
           limits:
-            cpu: 1
+            cpu: 500m
             memory: 1Gi
-        # volumes:
-        #   - name: coredumpfs
-        #     hostPath:
-        #       path: /tmp/coredumps
-        # volumeMounts:
-        #   - mountPath: /tmp/coredumps
-        #     name: coredumpfs
+          requests:
+            cpu: 500m
+            memory: 1Gi
+      # - name: us-east-1b
+      #   members: 2
+      #   storage:
+      #     capacity: 5Gi
+      #   resources:
+      #     limits:
+      #       cpu: 500m
+      #       memory: 1Gi
+      #     requests:
+      #       cpu: 500m
+      #       memory: 1Gi
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: scylla-service-monitor
+  namespace: scylla
+spec:
+  jobLabel: "app.kubernetes.io/name"
+  targetLabels: ["scylla/cluster"]
+  podTargetLabels: ["scylla/datacenter","scylla/rack"]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: scylla
+  endpoints:
+    - port: node-exporter
+    - port: agent-prometheus
+      metricRelabelings:
+        # rename job label to 'manager_agent' due to hardcoded name
+        # in Scylla Monitoring.
+        - sourceLabels: [ endpoint ]
+          targetLabel: job
+          regex: agent-prometheus
+          replacement: manager_agent
+    - port: prometheus
+      metricRelabelings:
+        - sourceLabels: [ scylla_cluster ]
+          targetLabel: cluster
+          regex: (.*)
+          replacement: ${1}
+          action: replace
+        - sourceLabels: [ scylla_datacenter ]
+          targetLabel: dc
+          regex: (.*)
+          replacement: ${1}
+          action: replace

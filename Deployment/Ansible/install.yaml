@@ -38,7 +38,7 @@
       dest: /etc/.helm
       owner: root
       group: root
-      mode: 0644W
+      mode: 0644
   - name: Install Pip
     apt:
       name: python3-pip
